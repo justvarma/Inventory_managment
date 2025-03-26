@@ -284,7 +284,8 @@ def product_form(window):
     update_button = Button(button_frame, text='Update', font=('times new roman', 14), width=8, cursor='hand2',
                            fg='white', bg='#0F4D7D',
                            command=lambda: update_product(category_combobox.get(), supplier_combobox.get(),
-                                                          name_entry.get(), price_entry.get(), discount_spinbox.get(), quantity_entry.get(),
+                                                          name_entry.get(), price_entry.get(), discount_spinbox.get(),
+                                                          quantity_entry.get(),
                                                           status_combobox.get(), treeview))
     update_button.grid(row=0, column=1, padx=10)
 
