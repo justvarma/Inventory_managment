@@ -147,7 +147,7 @@ tax_button.pack(fill=X)
 
 exit_icon = PhotoImage(file=r'assets\exit.png')
 exit_button = Button(leftFrame, image=exit_icon, compound=LEFT, text=' Exit', font=('times new roman', 20, 'bold'),
-                     anchor='w', padx=10)
+                     anchor='w', padx=10, command=window.quit)
 exit_button.pack(fill=X)
 
 emp_frame = Frame(window, bg='#2C3E50', bd=3, relief=RIDGE)
