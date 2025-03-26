@@ -8,6 +8,7 @@ from supplier import supplier_form
 from category import category_form
 from products import product_form
 from employees import connect_database
+from login import login
 import time
 from tkinter import messagebox
 
@@ -77,6 +78,14 @@ def show_form(form_function):
         current_frame.place_forget()
     current_frame = form_function(window)
 
+
+root = Tk()
+root.geometry("800x500")  # Set the window size
+root.title("Inventory Management System")
+
+login(root)  # Call the login page
+
+root.mainloop()
 
 # GUI
 window = Tk()
