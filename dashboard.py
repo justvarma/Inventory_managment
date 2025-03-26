@@ -1,8 +1,19 @@
+from logging import currentframe
 from tkinter import *
 from employees import employee_form
 from supplier import supplier_form
 from category import category_form
 from products import product_form
+
+current_frame = None
+
+
+def show_form(form_function):
+    global current_frame
+    if current_frame:
+        current_frame.place_forget()
+    current_frame = form_function(window)
+
 
 # GUI
 window = Tk()
@@ -38,24 +49,24 @@ menuLabel.pack(fill=X)
 employee_icon = PhotoImage(file=r'assets\employee.png')
 employee_button = Button(leftFrame, image=employee_icon, compound=LEFT, text=' Employees',
                          font=('times new roman', 20, 'bold'), anchor='w', padx=10,
-                         command=lambda: employee_form(window))
+                         command=lambda: show_form(employee_form))
 employee_button.pack(fill=X)
 
 supplier_icon = PhotoImage(file=r'assets\supplier.png')
 supplier_button = Button(leftFrame, image=supplier_icon, compound=LEFT, text=' Supplier',
                          font=('times new roman', 20, 'bold'), anchor='w', padx=10,
-                         command=lambda: supplier_form(window))
+                         command=lambda: show_form(supplier_form))
 supplier_button.pack(fill=X)
 
 category_icon = PhotoImage(file=r'assets\category.png')
 category_button = Button(leftFrame, image=category_icon, compound=LEFT, text=' Category',
                          font=('times new roman', 20, 'bold'), anchor='w', padx=10,
-                         command=lambda: category_form(window))
+                         command=lambda: show_form(category_form))
 category_button.pack(fill=X)
 
 product_icon = PhotoImage(file=r'assets\product.png')
 product_button = Button(leftFrame, image=product_icon, compound=LEFT, text=' Product',
-                        font=('times new roman', 20, 'bold'), anchor='w', padx=10, command=lambda: product_form(window))
+                        font=('times new roman', 20, 'bold'), anchor='w', padx=10, command=lambda: show_form(product_form))
 product_button.pack(fill=X)
 
 sales_icon = PhotoImage(file=r'assets\sales.png')

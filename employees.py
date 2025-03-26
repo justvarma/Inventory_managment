@@ -465,3 +465,4 @@ def employee_form(window):
                                                      usertype_combobox,
                                                      password_entry))
     create_database_table()
+    return employee_frame
