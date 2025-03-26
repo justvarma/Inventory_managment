@@ -5,6 +5,15 @@ from tkinter import ttk
 from tkinter import messagebox
 from employees import connect_database, treeview_data
 
+
+def select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry,
+                status_combobox):
+    index = treeview.selection()
+    dict = treeview.item(index)
+    content = dict['values']
+    print(content)
+
+
 def treeview_data(treeview):
     cursor, connection = connect_database()
     if not cursor or not connection:
@@ -22,6 +31,7 @@ def treeview_data(treeview):
     finally:
         cursor.close()
         connection.close()
+
 
 def fetch_supplier_category(category_combobox, supplier_combobox):
     category_option = []
@@ -128,7 +138,7 @@ def product_form(window):
     add_button = Button(button_frame, text='Add', font=('times new roman', 14), width=8, cursor='hand2',
                         fg='white', bg='#0F4D7D', command=lambda: add_product(
             category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), quantity_entry.get(),
-            status_combobox.get(), treeview ))
+            status_combobox.get(), treeview))
     add_button.grid(row=0, column=0, padx=(10, 0))
 
     update_button = Button(button_frame, text='Update', font=('times new roman', 14), width=8, cursor='hand2',
@@ -167,7 +177,8 @@ def product_form(window):
 
     scrolly = Scrollbar(treeview_frame, orient=VERTICAL)
     scrollx = Scrollbar(treeview_frame, orient=HORIZONTAL)
-    treeview = ttk.Treeview(treeview_frame, columns=('id', 'category', 'supplier', 'name', 'price', 'quantity', 'status'),
+    treeview = ttk.Treeview(treeview_frame,
+                            columns=('id', 'category', 'supplier', 'name', 'price', 'quantity', 'status'),
                             show='headings',
                             yscrollcommand=scrolly.set, xscrollcommand=scrollx.set)
     scrolly.pack(side=RIGHT, fill=Y)
@@ -185,3 +196,6 @@ def product_form(window):
     treeview.heading('status', text='Status')
     fetch_supplier_category(category_combobox, supplier_combobox)
     treeview_data(treeview)
+    treeview.bind('<ButtonRelease-1>',
+                  lambda event: select_data(event, treeview, category_combobox, supplier_combobox, name_entry,
+                                            price_entry, quantity_entry, status_combobox))
