@@ -6,12 +6,61 @@ from tkinter import messagebox
 from employees import connect_database, treeview_data
 
 
+def update_product(category, supplier, name, price, quantity, status, treeview):
+    index = treeview.selection()
+    dict = treeview.item(index)
+    content = dict['values']
+    id = content[0]
+    if not index:
+        messagebox.showerror('Error', 'No row is selected')
+        return
+    cursor, connection = connect_database()
+    if not cursor or not connection:
+        return
+    try:
+        cursor.execute('use inventory_systems')
+        cursor.execute('SELECT * from product_data WHERE id=%s', id)
+        current_data = cursor.fetchone()
+        current_data = current_data[1:]
+        current_data = list(current_data)
+        current_data[3]=str(current_data[3])
+        current_data=tuple(current_data)
+
+        quantity=int(quantity)
+        new_data = (category, supplier, name, price, quantity, status)
+
+        if current_data == new_data:
+            messagebox.showinfo('Info', 'No changes detected')
+            return
+
+        cursor.execute(
+            'UPDATE product_data SET category=%s, supplier=%s, name=%s, price=%s, quantity=%s, status=%s WHERE id=%s',
+            (category, supplier, name, price, quantity, status, id))
+        connection.commit()
+        messagebox.showinfo('Info', 'Data is updated')
+        treeview_data(treeview)
+    except Exception as e:
+        messagebox.showerror('Error', f'Error due to {e}')
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
 def select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry,
                 status_combobox):
     index = treeview.selection()
     dict = treeview.item(index)
     content = dict['values']
-    print(content)
+    name_entry.delete(0, END)
+    price_entry.delete(0, END)
+    quantity_entry.delete(0, END)
+    category_combobox.set(content[1])
+    supplier_combobox.set(content[2])
+    name_entry.insert(0, content[3])
+    price_entry.insert(0, content[4])
+    quantity_entry.insert(0, content[5])
+    status_combobox.set(content[6])
 
 
 def treeview_data(treeview):
@@ -71,6 +120,13 @@ def add_product(category, supplier, name, price, quantity, status, treeview):
         cursor.execute('USE inventory_systems')
         cursor.execute(
             'CREATE TABLE IF NOT EXISTS product_data (id INT AUTO_INCREMENT PRIMARY KEY, category VARCHAR(100), supplier VARCHAR(100), name VARCHAR(100), price DECIMAL(10, 2), quantity INT, status VARCHAR(50))')
+        cursor.execute('SELECT * FROM product_data WHERE category=%s AND supplier=%s AND name=%s',
+                       (category, supplier, name))
+        existing_product = cursor.fetchone()
+        if existing_product:
+            messagebox.showerror('Error', 'Product already exists')
+            return
+
         cursor.execute(
             'INSERT INTO product_data (category, supplier, name, price, quantity, status) VALUES(%s, %s, %s, %s, %s, %s)',
             (category, supplier, name, price, quantity, status))
@@ -142,7 +198,10 @@ def product_form(window):
     add_button.grid(row=0, column=0, padx=(10, 0))
 
     update_button = Button(button_frame, text='Update', font=('times new roman', 14), width=8, cursor='hand2',
-                           fg='white', bg='#0F4D7D', )
+                           fg='white', bg='#0F4D7D',
+                           command=lambda: update_product(category_combobox.get(), supplier_combobox.get(),
+                                                          name_entry.get(), price_entry.get(), quantity_entry.get(),
+                                                          status_combobox.get(), treeview))
     update_button.grid(row=0, column=1, padx=10)
 
     delete_button = Button(button_frame, text='Delete', font=('times new roman', 14), width=8, cursor='hand2',
