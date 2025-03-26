@@ -1,9 +1,79 @@
 from re import search
 from tkinter import *
+from tkinter.messagebox import askyesno
 from tkinter.ttk import Combobox
 from tkinter import ttk
 from tkinter import messagebox
-from employees import connect_database, treeview_data
+from employees import connect_database, treeview_data, clear_feilds
+
+
+def show_all(treeview, search_combobox, search_entry):
+    treeview_data(treeview)
+    search_combobox.set('Search By')
+    search_entry.delete(0, END)
+
+
+def search_product(search_combobox, search_entry, treeview):
+    if search_combobox.get() == 'Search By':
+        messagebox.showwarning('Warning', 'Please select an option')
+    elif search_entry.get() == '':
+        messagebox.showwarning('Warning', 'Please enter the value to search')
+    else:
+        cursor, connection = connect_database()
+        if not cursor or not connection:
+            return
+        cursor.execute('use inventory_systems')
+        cursor.execute(f'Select * from product_data WHERE {search_combobox.get()}=%s', search_entry.get())
+        records = cursor.fetchall()
+        if len(records) == 0:
+            messagebox.showerror('Error', 'No records found')
+            return
+        treeview.delete(*treeview.get_children())
+        for record in records:
+            treeview.insert('', END, values=record)
+
+
+def clear_product(category_combobox, supplier_combobox,
+                  name_entry, price_entry, quantity_entry,
+                  status_combobox, treeview):
+    treeview.selection_remove(treeview.selection())
+    category_combobox.set('Select')
+    supplier_combobox.set('Select')
+    name_entry.delete(0, END)
+    price_entry.delete(0, END)
+    quantity_entry.delete(0, END)
+    status_combobox.set('Select Status')
+
+
+def delete_product(treeview, category_combobox, supplier_combobox,
+                   name_entry, price_entry, quantity_entry,
+                   status_combobox):
+    index = treeview.selection()
+    dict = treeview.item(index)
+    content = dict['values']
+    id = content[0]
+    if not index:
+        messagebox.showerror('Error', 'No row is selected')
+        return
+    ans = messagebox.askyesno('Confirm', 'Do you really want to delete?')
+    if ans:
+        cursor, connection = connect_database()
+        if not cursor or not connection:
+            return
+        try:
+            cursor.execute('use inventory_systems')
+            cursor.execute('DELETE FROM product_data WHERE id=%s', id)
+            connection.commit()
+            treeview_data(treeview)
+            messagebox.showinfo('Info', 'Record is deleted')
+            clear_product(category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry,
+                          status_combobox, treeview)
+        except Exception as e:
+            messagebox.showerror('Error', f'Error due to {e}')
+
+        finally:
+            cursor.close()
+            connection.close()
 
 
 def update_product(category, supplier, name, price, quantity, status, treeview):
@@ -23,10 +93,10 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
         current_data = cursor.fetchone()
         current_data = current_data[1:]
         current_data = list(current_data)
-        current_data[3]=str(current_data[3])
-        current_data=tuple(current_data)
+        current_data[3] = str(current_data[3])
+        current_data = tuple(current_data)
 
-        quantity=int(quantity)
+        quantity = int(quantity)
         new_data = (category, supplier, name, price, quantity, status)
 
         if current_data == new_data:
@@ -205,11 +275,17 @@ def product_form(window):
     update_button.grid(row=0, column=1, padx=10)
 
     delete_button = Button(button_frame, text='Delete', font=('times new roman', 14), width=8, cursor='hand2',
-                           fg='white', bg='#0F4D7D', )
+                           fg='white', bg='#0F4D7D',
+                           command=lambda: delete_product(treeview, category_combobox, supplier_combobox,
+                                                          name_entry, price_entry, quantity_entry,
+                                                          status_combobox))
     delete_button.grid(row=0, column=2)
 
     clear_button = Button(button_frame, text='Clear', font=('times new roman', 14), width=8, cursor='hand2',
-                          fg='white', bg='#0F4D7D', )
+                          fg='white', bg='#0F4D7D', command=lambda: clear_product(category_combobox, supplier_combobox,
+                                                                                  name_entry, price_entry,
+                                                                                  quantity_entry,
+                                                                                  status_combobox, treeview))
     clear_button.grid(row=0, column=3, padx=10)
 
     search_frame = LabelFrame(product_frame, text='Search Product', font=('times new roman', 14, 'bold'), bg='white')
@@ -224,11 +300,12 @@ def product_form(window):
     search_entry.grid(row=0, column=1)
 
     search_button = Button(search_frame, text='Search', font=('times new roman', 14), width=8, cursor='hand2',
-                           fg='white', bg='#0F4D7D', )
+                           fg='white', bg='#0F4D7D',
+                           command=lambda: search_product(search_combobox, search_entry, treeview))
     search_button.grid(row=0, column=2, padx=(10, 0), pady=10)
 
     show_button = Button(search_frame, text='Show All', font=('times new roman', 14), width=8, cursor='hand2',
-                         fg='white', bg='#0F4D7D', )
+                         fg='white', bg='#0F4D7D', command=lambda: show_all(treeview, search_combobox, search_entry))
     show_button.grid(row=0, column=3, padx=10)
 
     treeview_frame = Frame(product_frame)
