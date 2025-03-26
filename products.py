@@ -35,7 +35,7 @@ def search_product(search_combobox, search_entry, treeview):
 
 def clear_product(category_combobox, supplier_combobox,
                   name_entry, price_entry, quantity_entry,
-                  status_combobox, treeview):
+                  status_combobox, discount_spinbox, treeview):
     treeview.selection_remove(treeview.selection())
     category_combobox.set('Select')
     supplier_combobox.set('Select')
@@ -43,11 +43,13 @@ def clear_product(category_combobox, supplier_combobox,
     price_entry.delete(0, END)
     quantity_entry.delete(0, END)
     status_combobox.set('Select Status')
+    discount_spinbox.delete(0, END)
+    discount_spinbox.insert(0, 0)
 
 
 def delete_product(treeview, category_combobox, supplier_combobox,
                    name_entry, price_entry, quantity_entry,
-                   status_combobox):
+                   status_combobox, discount_spinbox):
     index = treeview.selection()
     dict = treeview.item(index)
     content = dict['values']
@@ -67,7 +69,7 @@ def delete_product(treeview, category_combobox, supplier_combobox,
             treeview_data(treeview)
             messagebox.showinfo('Info', 'Record is deleted')
             clear_product(category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry,
-                          status_combobox, treeview)
+                          status_combobox, discount_spinbox, treeview)
         except Exception as e:
             messagebox.showerror('Error', f'Error due to {e}')
 
@@ -76,14 +78,14 @@ def delete_product(treeview, category_combobox, supplier_combobox,
             connection.close()
 
 
-def update_product(category, supplier, name, price, quantity, status, treeview):
+def update_product(category, supplier, name, price, discount, quantity, status, treeview):
     index = treeview.selection()
     dict = treeview.item(index)
     content = dict['values']
-    id = content[0]
     if not index:
         messagebox.showerror('Error', 'No row is selected')
         return
+    id = content[0]
     cursor, connection = connect_database()
     if not cursor or not connection:
         return
@@ -94,18 +96,20 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
         current_data = current_data[1:]
         current_data = list(current_data)
         current_data[3] = str(current_data[3])
+        current_data[4] = str(current_data[4])
+        del current_data[5]
         current_data = tuple(current_data)
 
         quantity = int(quantity)
-        new_data = (category, supplier, name, price, quantity, status)
+        new_data = (category, supplier, name, price, discount, quantity, status)
 
         if current_data == new_data:
             messagebox.showinfo('Info', 'No changes detected')
             return
-
+        discounted_price = round(float(price) * (1 - float(discount) / 100), 2)
         cursor.execute(
-            'UPDATE product_data SET category=%s, supplier=%s, name=%s, price=%s, quantity=%s, status=%s WHERE id=%s',
-            (category, supplier, name, price, quantity, status, id))
+            'UPDATE product_data SET category=%s, supplier=%s, name=%s, price=%s, discount=%s, discounted_price=%s, quantity=%s, status=%s WHERE id=%s',
+            (category, supplier, name, price, discount, discounted_price, quantity, status, id))
         connection.commit()
         messagebox.showinfo('Info', 'Data is updated')
         treeview_data(treeview)
@@ -118,19 +122,21 @@ def update_product(category, supplier, name, price, quantity, status, treeview):
 
 
 def select_data(event, treeview, category_combobox, supplier_combobox, name_entry, price_entry, quantity_entry,
-                status_combobox):
+                status_combobox, discount_spinbox):
     index = treeview.selection()
     dict = treeview.item(index)
     content = dict['values']
     name_entry.delete(0, END)
     price_entry.delete(0, END)
+    discount_spinbox.delete(0, END)
     quantity_entry.delete(0, END)
     category_combobox.set(content[1])
     supplier_combobox.set(content[2])
     name_entry.insert(0, content[3])
     price_entry.insert(0, content[4])
-    quantity_entry.insert(0, content[5])
-    status_combobox.set(content[6])
+    discount_spinbox.insert(0, content[5])
+    quantity_entry.insert(0, content[7])
+    status_combobox.set(content[8])
 
 
 def treeview_data(treeview):
@@ -176,7 +182,7 @@ def fetch_supplier_category(category_combobox, supplier_combobox):
         supplier_combobox.config(values=supplier_option)
 
 
-def add_product(category, supplier, name, price, quantity, status, treeview):
+def add_product(category, supplier, name, price, discount, quantity, status, treeview):
     if category == 'Empty':
         messagebox.showerror('Error', 'Please add categories')
     elif supplier == 'Empty':
@@ -190,16 +196,18 @@ def add_product(category, supplier, name, price, quantity, status, treeview):
         cursor.execute('USE inventory_systems')
         cursor.execute(
             'CREATE TABLE IF NOT EXISTS product_data (id INT AUTO_INCREMENT PRIMARY KEY, category VARCHAR(100), supplier VARCHAR(100), name VARCHAR(100), price DECIMAL(10, 2), quantity INT, status VARCHAR(50))')
+        # cursor.execute(
+        #    'ALTER TABLE product_data ADD COLUMN IF NOT EXISTS discount INT AFTER price, ADD COLUMN IF NOT EXISTS discounted_price DECIMAL(10, 2) AFTER discount')
         cursor.execute('SELECT * FROM product_data WHERE category=%s AND supplier=%s AND name=%s',
                        (category, supplier, name))
         existing_product = cursor.fetchone()
         if existing_product:
             messagebox.showerror('Error', 'Product already exists')
             return
-
+        discounted_price = round(float(price) * (1 - float(discount) / 100), 2)
         cursor.execute(
-            'INSERT INTO product_data (category, supplier, name, price, quantity, status) VALUES(%s, %s, %s, %s, %s, %s)',
-            (category, supplier, name, price, quantity, status))
+            'INSERT INTO product_data (category, supplier, name, price, discount, discounted_price, quantity, status) VALUES(%s, %s, %s, %s, %s, %s,  %s, %s)',
+            (category, supplier, name, price, discount, discounted_price, quantity, status))
 
         connection.commit()
         messagebox.showinfo('Success', 'Data is added successfully')
@@ -227,7 +235,7 @@ def product_form(window):
     category_label = Label(left_frame, text='Category', font=('times new roman', 14, 'bold'), bg='white')
     category_label.grid(row=1, column=0, padx=20, sticky='w')
     category_combobox = ttk.Combobox(left_frame, font=('times new roman', 14, 'bold'), width=18, state='readonly')
-    category_combobox.grid(row=1, column=1, pady=40)
+    category_combobox.grid(row=1, column=1, pady=30)
     category_combobox.set('Empty')
 
     supplier_label = Label(left_frame, text='Supplier', font=('times new roman', 14, 'bold'), bg='white')
@@ -239,38 +247,44 @@ def product_form(window):
     name_label = Label(left_frame, text='Name', font=('times new roman', 14, 'bold'), bg='white')
     name_label.grid(row=3, column=0, padx=20, sticky='w')
     name_entry = Entry(left_frame, font=('times new roman', 14, 'bold'), bg='lightyellow')
-    name_entry.grid(row=3, column=1, pady=40)
+    name_entry.grid(row=3, column=1, pady=30)
 
     price_label = Label(left_frame, text='Price', font=('times new roman', 14, 'bold'), bg='white')
     price_label.grid(row=4, column=0, padx=20, sticky='w')
     price_entry = Entry(left_frame, font=('times new roman', 14, 'bold'), bg='lightyellow')
     price_entry.grid(row=4, column=1)
 
+    discount_label = Label(left_frame, text='Discount(%)', font=('times new roman', 14, 'bold'), bg='white')
+    discount_label.grid(row=5, column=0, padx=20, sticky='w', pady=(30, 0))
+    discount_spinbox = Spinbox(left_frame, from_=0, to=100, font=('times new roman', 14, 'bold'), width=19)
+    discount_spinbox.grid(row=5, column=1, pady=(30, 0))
+
     quantity_label = Label(left_frame, text='Quantity', font=('times new roman', 14, 'bold'), bg='white')
-    quantity_label.grid(row=5, column=0, padx=20, sticky='w')
+    quantity_label.grid(row=6, column=0, padx=20, sticky='w')
     quantity_entry = Entry(left_frame, font=('times new roman', 14, 'bold'), bg='lightyellow')
-    quantity_entry.grid(row=5, column=1, pady=40)
+    quantity_entry.grid(row=6, column=1, pady=30)
 
     status_label = Label(left_frame, text='Status', font=('times new roman', 14, 'bold'), bg='white')
-    status_label.grid(row=6, column=0, padx=20, sticky='w')
+    status_label.grid(row=7, column=0, padx=20, sticky='w')
     status_combobox = ttk.Combobox(left_frame, values=('Active', 'Inactive'), font=('times new roman', 14, 'bold'),
                                    width=18, state='readonly')
-    status_combobox.grid(row=6, column=1)
+    status_combobox.grid(row=7, column=1)
     status_combobox.set('Select Status')
 
     button_frame = Frame(left_frame, bg='white')
-    button_frame.grid(row=7, columnspan=2, pady=(30, 10))
+    button_frame.grid(row=8, columnspan=2, pady=(30, 10))
 
     add_button = Button(button_frame, text='Add', font=('times new roman', 14), width=8, cursor='hand2',
                         fg='white', bg='#0F4D7D', command=lambda: add_product(
-            category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(), quantity_entry.get(),
+            category_combobox.get(), supplier_combobox.get(), name_entry.get(), price_entry.get(),
+            discount_spinbox.get(), quantity_entry.get(),
             status_combobox.get(), treeview))
     add_button.grid(row=0, column=0, padx=(10, 0))
 
     update_button = Button(button_frame, text='Update', font=('times new roman', 14), width=8, cursor='hand2',
                            fg='white', bg='#0F4D7D',
                            command=lambda: update_product(category_combobox.get(), supplier_combobox.get(),
-                                                          name_entry.get(), price_entry.get(), quantity_entry.get(),
+                                                          name_entry.get(), price_entry.get(), discount_spinbox.get(), quantity_entry.get(),
                                                           status_combobox.get(), treeview))
     update_button.grid(row=0, column=1, padx=10)
 
@@ -278,14 +292,15 @@ def product_form(window):
                            fg='white', bg='#0F4D7D',
                            command=lambda: delete_product(treeview, category_combobox, supplier_combobox,
                                                           name_entry, price_entry, quantity_entry,
-                                                          status_combobox))
+                                                          status_combobox, discount_spinbox))
     delete_button.grid(row=0, column=2)
 
     clear_button = Button(button_frame, text='Clear', font=('times new roman', 14), width=8, cursor='hand2',
                           fg='white', bg='#0F4D7D', command=lambda: clear_product(category_combobox, supplier_combobox,
                                                                                   name_entry, price_entry,
                                                                                   quantity_entry,
-                                                                                  status_combobox, treeview))
+                                                                                  status_combobox, discount_spinbox,
+                                                                                  treeview))
     clear_button.grid(row=0, column=3, padx=10)
 
     search_frame = LabelFrame(product_frame, text='Search Product', font=('times new roman', 14, 'bold'), bg='white')
@@ -314,7 +329,10 @@ def product_form(window):
     scrolly = Scrollbar(treeview_frame, orient=VERTICAL)
     scrollx = Scrollbar(treeview_frame, orient=HORIZONTAL)
     treeview = ttk.Treeview(treeview_frame,
-                            columns=('id', 'category', 'supplier', 'name', 'price', 'quantity', 'status'),
+                            columns=(
+                                'id', 'category', 'supplier', 'name', 'price', 'discount', 'discounted_price',
+                                'quantity',
+                                'status'),
                             show='headings',
                             yscrollcommand=scrolly.set, xscrollcommand=scrollx.set)
     scrolly.pack(side=RIGHT, fill=Y)
@@ -328,11 +346,13 @@ def product_form(window):
     treeview.heading('supplier', text='Supplier')
     treeview.heading('name', text='Product Name')
     treeview.heading('price', text='Price')
+    treeview.heading('discount', text='Discount')
+    treeview.heading('discounted_price', text='Discount Price')
     treeview.heading('quantity', text='Quantity')
     treeview.heading('status', text='Status')
     fetch_supplier_category(category_combobox, supplier_combobox)
     treeview_data(treeview)
     treeview.bind('<ButtonRelease-1>',
                   lambda event: select_data(event, treeview, category_combobox, supplier_combobox, name_entry,
-                                            price_entry, quantity_entry, status_combobox))
+                                            price_entry, quantity_entry, status_combobox, discount_spinbox))
     return product_frame
