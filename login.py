@@ -104,7 +104,7 @@ class LoginApp:
         try:
             connection = pymysql.connect(host="localhost", user="root", password="Adityavarma@123", database="inventory_systems")
             cursor = connection.cursor()
-            cursor.execute("SELECT * FROM employee WHERE emp_id=%s AND password=%s", (emp_id, password))
+            cursor.execute("SELECT * FROM employee_data WHERE empid=%s AND password=%s", (emp_id, password))
             user = cursor.fetchone()
 
             if user:
