@@ -930,7 +930,7 @@ def employee_form(parent_frame, back_callback):
 
     # Back Button using the callback
     try:
-        back_icon = PhotoImage(file='assets/back.png')
+        back_icon = PhotoImage(file='../assets/back.png')
         back_button = Button(employee_frame, image=back_icon, bd=0, cursor='hand2', bg='white', command=back_callback)
         back_button.image = back_icon # Keep reference
         back_button.place(x=5, y=2)
@@ -1317,7 +1317,7 @@ def supplier_form(parent_frame, back_callback):
 
     # Back Button
     try:
-        back_icon_supp = PhotoImage(file='assets/back.png')
+        back_icon_supp = PhotoImage(file='../assets/back.png')
         back_button = Button(supplier_frame, image=back_icon_supp, bd=0, cursor='hand2', bg='white', command=back_callback)
         back_button.image = back_icon_supp
         back_button.place(x=5, y=2)
@@ -1600,7 +1600,7 @@ def category_form(parent_frame, back_callback):
 
     # Back Button
     try:
-        back_icon_cat = PhotoImage(file='assets/back.png')
+        back_icon_cat = PhotoImage(file='../assets/back.png')
         back_button = Button(category_frame, image=back_icon_cat, bd=0, cursor='hand2', bg='white', command=back_callback)
         back_button.image = back_icon_cat
         back_button.place(x=5, y=2)
@@ -1617,7 +1617,7 @@ def category_form(parent_frame, back_callback):
     paned_window.add(left_pane, width=400) # Initial width
 
     try:
-        logo_cat = PhotoImage(file='assets/product_category.png')
+        logo_cat = PhotoImage(file='../assets/product_category.png')
         label = Label(left_pane, image=logo_cat, bg='white')
         label.image = logo_cat
         label.pack(pady=20)
@@ -2111,7 +2111,7 @@ def product_form(parent_frame, back_callback):
 
     # Back Button
     try:
-        back_icon_prod = PhotoImage(file='assets/back.png')
+        back_icon_prod = PhotoImage(file='../assets/back.png')
         back_button = Button(product_frame, image=back_icon_prod, bd=0, cursor='hand2', bg='white', command=back_callback)
         back_button.image = back_icon_prod
         back_button.place(x=5, y=2)
