@@ -85,8 +85,9 @@ class LoginApp:
         self.show_password = not self.show_password
 
     def update_carousel(self):
-        self.image_label.config(image=next(self.image_cycle))
-        self.root.after(5000, self.update_carousel)  # Change image every 3 seconds
+        if self.root and self.root.winfo_exists():
+            self.image_label.config(image=next(self.image_cycle))
+            self.root.after_id = self.root.after(5000, self.update_carousel)  # Store after() ID
 
     def authenticate(self):
         emp_id = self.emp_id_entry.get()
@@ -126,12 +127,19 @@ class LoginApp:
     def open_dashboard(self):
         from dashboard import DashboardApp  # Import dashboard class
 
-        # Destroy the login window before opening the dashboard
-        self.root.destroy()
+        # Check if root exists before withdrawing or destroying
+        if self.root and self.root.winfo_exists():
+            self.root.after_cancel(self.root.after_id)  # Cancel carousel update
+            self.root.withdraw()  # Hide login window
 
+        # Open dashboard in a new window
         dashboard_root = Tk()
         app = DashboardApp(dashboard_root)
         dashboard_root.mainloop()
+
+        # Restore login window only if it still exists
+        if self.root and self.root.winfo_exists():
+            self.root.deiconify()
 
 
 if __name__ == "__main__":

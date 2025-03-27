@@ -27,6 +27,7 @@ if __name__ == "__main__":
     app = DashboardApp(root)
     root.mainloop()
 
+
 def tax_window():
     def save_tax():
         value = tax_count.get()
