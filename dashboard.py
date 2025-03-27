@@ -11,6 +11,21 @@ from employees import connect_database
 import time
 from tkinter import messagebox
 
+class DashboardApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Dashboard")
+        self.root.geometry("800x500")
+        self.root.configure(bg="white")
+
+        Label(self.root, text="Welcome to Dashboard", font=("Arial", 20)).pack(pady=50)
+        Button(self.root, text="Logout", font=("Arial", 14), command=self.root.quit).pack(pady=20)
+
+
+if __name__ == "__main__":
+    root = Tk()
+    app = DashboardApp(root)
+    root.mainloop()
 
 def tax_window():
     def save_tax():
