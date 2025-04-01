@@ -60,11 +60,6 @@ class LoginApp:
                                     borderwidth=0)
         self.toggle_button.pack(pady=5)
 
-        # Forgot Password
-        self.forgot_password_label = Label(self.login_frame, text="Forgot Password?", fg="blue", bg="#D3D3D3",
-                                           cursor="hand2")
-        self.forgot_password_label.pack()
-
         # Login Button
         self.login_button = Button(self.login_frame, text="Login", font=("Times New Roman", 14, "bold"),
                                    bg="#4A90E2", fg="white", width=10, command=self.authenticate)
